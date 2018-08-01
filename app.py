@@ -172,7 +172,7 @@ def handle_postback_event(event):
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
 
-    if 'start_test=' in postback_data:
+    if 'start_test=' in postback_data or 'rerun_test=' in postback_data:
         job_name = postback_data.split('=')[1]
         build_result = jenkins.build_job(job_name)
         if build_result:
