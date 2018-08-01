@@ -22,6 +22,7 @@ jenkins = Jenkins()
 
 bucket_prefix = os.getenv('VIDEO_BUCKET_URL_PREFIX')
 
+
 class RunTest(object):
 
     def display_test_job_menu(self, data):
