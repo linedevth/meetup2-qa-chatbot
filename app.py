@@ -92,7 +92,7 @@ def callback():
     return 'OK'
 
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def home():
     return jsonify({'status': 'up'})
 
@@ -184,11 +184,11 @@ if __name__ == '__main__':
     arg_parser = ArgumentParser(
         usage='Usage: python ' + __file__ + '[--port <port> [--help]'
     )
-    arg_parser.add_argument('-p', '--port', type=int, default=6000, help='port')
+    arg_parser.add_argument('-p', '--port', type=int, default=8666, help='port')
     arg_parser.add_argument('-d', '--debug', default=True, help='debug')
     options = arg_parser.parse_args()
 
     # create tmp dir for download content
     make_static_tmp_dir()
 
-    app.run(port=options.port)
+    app.run(host='0.0.0.0',port=options.port)
