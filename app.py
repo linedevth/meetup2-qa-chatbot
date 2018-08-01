@@ -92,6 +92,11 @@ def callback():
     return 'OK'
 
 
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({'status': 'up'})
+
+
 def make_static_tmp_dir():
     try:
         os.makedirs(static_tmp_path)
@@ -186,4 +191,4 @@ if __name__ == '__main__':
     # create tmp dir for download content
     make_static_tmp_dir()
 
-    app.run(host='0.0.0.0', debug=options.debug, port=options.port)
+    app.run(port=options.port)
