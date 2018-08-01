@@ -6,7 +6,7 @@ RUN ln -s /usr/include/locale.h /usr/include/xlocale.h
 
 WORKDIR /app
 ADD ./requirements.txt /app
-ADD /app /app
+ADD * /app/
 
 RUN pip install -r ./requirements.txt
 
