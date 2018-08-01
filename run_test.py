@@ -12,7 +12,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
-
+import os
 from linebot.models import (
     ButtonsTemplate, PostbackAction
 )
@@ -20,21 +20,22 @@ from jenkins import Jenkins
 
 jenkins = Jenkins()
 
+bucket_prefix = os.getenv('VIDEO_BUCKET_URL_PREFIX')
 
 class RunTest(object):
 
-    def display_run_test_menu(self):
+    def display_test_job_menu(self, data):
         """
             Display Job List Menu.
         """
         button_template = ButtonsTemplate()
         button_template.text = 'Please Select The Job'
         job_list = jenkins.list_job()
-        button_template.thumbnail_image_url = 'https://images.pexels.com/photos/5933/color-paint-palette-wall-painting.jpg'
+        button_template.thumbnail_image_url = '{0}/run.jpg'.format(bucket_prefix)
         for job in job_list:
             job_name = job['name']
             button_template.actions.append(
-                PostbackAction(label=job_name, data='start_test={}'.format(job_name))
+                PostbackAction(label=job_name, data=data.format(job_name))
             )
         return button_template
 
@@ -46,11 +47,7 @@ class RunTest(object):
         job_list = jenkins.list_failed_job()
         if len(job_list) > 0:
             button_template.text = 'Please Select The Failed Test Jobs'
-            button_template.thumbnail_image_url = 'https://res.cloudinary.com/twenty20/private_images/' \
-                                                  't_watermark-criss-cross-10/v1436383102000/photosp/' \
-                                                  '28530ceb-0a66-4aaa-a795-9dbdabfddd27/stock-photo-' \
-                                                  'outdoors-red-book-reading-tiles-failure-fail-better-' \
-                                                  'flat-lay-28530ceb-0a66-4aaa-a795-9dbdabfddd27.jpg'
+            button_template.thumbnail_image_url = '{0}/oops.jpg'.format(bucket_prefix)
             for job in job_list:
                 job_name = job['name']
                 button_template.actions.append(

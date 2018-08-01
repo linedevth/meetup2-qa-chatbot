@@ -32,7 +32,7 @@ from linebot.exceptions import (
 
 from linebot.models import (
     MessageEvent, FollowEvent, UnfollowEvent, PostbackEvent, TextMessage, TextSendMessage, SourceUser,
-    SourceGroup, SourceRoom, FlexSendMessage, TemplateSendMessage
+    SourceGroup, SourceRoom, FlexSendMessage, TemplateSendMessage, VideoSendMessage, ImageSendMessage
 )
 
 app = Flask(__name__)
@@ -105,35 +105,21 @@ def make_static_tmp_dir():
 @app.route('/testresult', methods=['POST'])
 def send_test_result():
     data = dict()
-    data['test_result'] = request.form.get('test_result')
-    if data['test_result'] == 'SUCCESS':
-        data['header_color'] = '#2ac12f'
-    else:
-        data['header_color'] = '#ba0900'
-    data['start_time'] = request.form.get('start_time')
-    data['end_time'] = request.form.get('end_time')
-    data['duration'] = request.form.get('duration')
-    data['passed'] = request.form.get('passed')
-    data['failed'] = request.form.get('failed')
-    data['total'] = request.form.get('total')
-    data['report_url'] = request.form.get('report_url')
-    data['changes'] = request.form.get('changes')
-    data['started_by'] = request.form.get('started_by')
-    data['job_name'] = request.form.get('job_name')
+    data['job_url'] = request.form.get('job_url')
     data['build_no'] = request.form.get('build_no')
     data['to'] = request.form.get('to')
     result = {
         'result_code': 0,
         'result_message': 'success'
     }
-    bubble_container = test_result.generate_test_result_message(data)
+    result_data = jenkins.get_test_result(data['job_url'], data['build_no'])
+    bubble_container = test_result.generate_test_result_message(result_data)
     line_bot_api.push_message(data['to'], messages=FlexSendMessage('Test Result', contents=bubble_container))
     return jsonify(result)
 
 
 @handler.add(FollowEvent)
 def handle_follow_event(event):
-    print('Got Follow Event')
     user_id = event.source.user_id
     line_bot_api.unlink_rich_menu_from_user(user_id)
     rich_menu_list = line_bot_api.get_rich_menu_list()
@@ -147,28 +133,46 @@ def handle_follow_event(event):
 def handle_text_message(event):
     print('Got Text Message Event')
     print('user_id: {}'.format(event.source.user_id))
+    if event.message.text == 'video':
+        image_url = 'https://images.theconversation.com/files/124181/original/image-20160526-22086-1skmtaf.jpg?ixlib=rb-1.1.0&q=45&auto=format&w=240&h=240&fit=crop'
+        # video_url = 'https://www.sample-videos.com/video/mp4/360/big_buck_bunny_360p_5mb.mp4'
+        video_url = 'https://s3-ap-northeast-1.amazonaws.com/weekup2/output.mp4'
+        line_bot_api.reply_message(event.reply_token, messages=VideoSendMessage(original_content_url=video_url,
+                                                                                preview_image_url=image_url))
 
 
 @handler.add(PostbackEvent)
 def handle_postback_event(event):
-    print('Got Postback Event')
     postback_data = event.postback.data
+    print('postback_data: {}'.format(postback_data))
     if postback_data == 'mode=run_test':
-        job_template = run_test.display_run_test_menu()
+        job_template = run_test.display_test_job_menu(data='start_test={}')
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
     if postback_data == 'mode=rerun_test':
         failed_job_template = run_test.display_failed_test_menu()
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Failed Job List',
                                                                                    template=failed_job_template))
+    if postback_data == 'mode=latest_result':
+        job_template = run_test.display_test_job_menu(data='latest_result={}')
+        line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
+                                                                                   template=job_template))
 
     if 'start_test=' in postback_data:
         job_name = postback_data.split('=')[1]
         build_result = jenkins.build_job(job_name)
         if build_result:
-            line_bot_api.reply_message(event.reply_token, messages=TextSendMessage(text='Trigger Job: {0} Success!'.format(job_name)))
+            line_bot_api.reply_message(event.reply_token, messages=TextSendMessage(text='Trigger Job:{0} Please Wait...'.format(job_name)))
         else:
             line_bot_api.reply_message(event.reply_token, messages=TextSendMessage(text='Trigger Job: {0} Failed!'.format(job_name)))
+
+    if 'latest_result=' in postback_data:
+        job_name = postback_data.split('=')[1]
+        job_url = os.getenv('JENKINS_URL') + '/job/' + job_name + '/'
+        latest_result_data = jenkins.get_test_latest_result(job_url)
+        carousel_container = test_result.generate_latest_result(latest_result_data)
+        line_bot_api.get_room_member_ids()
+        line_bot_api.reply_message(event.reply_token, messages=FlexSendMessage(alt_text='Latest Result', contents=carousel_container))
 
 
 if __name__ == '__main__':

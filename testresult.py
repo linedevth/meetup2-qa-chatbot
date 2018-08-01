@@ -13,8 +13,9 @@
 #  under the License.
 
 from linebot.models import (
-    BubbleContainer
+    BubbleContainer, CarouselContainer
 )
+import json
 
 
 class TestResult(object):
@@ -40,6 +41,11 @@ class TestResult(object):
                     }
                 ]
             },
+            "hero": {
+                "type": "image",
+                "url": data['hero_image'],
+                "size": "md"
+            },
             "body": {
                 "type": "box",
                 "layout": "vertical",
@@ -52,8 +58,7 @@ class TestResult(object):
                     },
                     {
                         "type": "text",
-                        "text": "Build#{0} {1} - {2} ({3})".format(data['build_no'], data['start_time'], data['end_time'],
-                                                                   data['duration']),
+                        "text": "Build#{0} ({1})".format(data['build_no'], data['duration']),
                         "size": "xs",
                         "color": "#aaaaaa",
                         "wrap": True
@@ -148,3 +153,88 @@ class TestResult(object):
         }
 
         return BubbleContainer.new_from_json_dict(bubble)
+
+    def generate_latest_result(self, data):
+        carousel = CarouselContainer()
+        for suite in data['suites']:
+            bubble = {
+                "type": "bubble",
+                "styles": {
+                    "header": {
+                        "backgroundColor": data["header_color"]
+                    }
+                },
+                "header": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                        {
+                            "type": "text",
+                            "text": data["job_name"],
+                            "color": "#000000",
+                            "size": "lg",
+                            "weight": "bold"
+                        },
+                        {
+                            "type": "text",
+                            "text": "Build#{}".format(data["build_no"]),
+                            "color": "#000000",
+                            "size": "xs"
+                        }
+                    ]
+                },
+                "body": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "spacing": "md",
+                    "contents": [
+                        {
+                            "type": "box",
+                            "layout": "horizontal",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": suite['suite_name'],
+                                    "size": "xs"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": []
+                        }
+                    ]
+                }
+            }
+            bubble_test_contents = bubble['body']['contents'][2]['contents']
+            for test in suite['tests']:
+                bubble_test_contents.append(
+                    {
+                        "type": "box",
+                        "layout": "horizontal",
+                        "contents": [
+                            {
+                                "type": "text",
+                                "text": test["test_name"],
+                                "size": "xxs",
+                                "wrap": True,
+                                "flex": 4
+                            },
+                            {
+                                "type": "text",
+                                "text": test["status"],
+                                "color": test['status_color'],
+                                "size": "xxs",
+                                "align": "end"
+                            }
+                        ]
+                    }
+                )
+            bubble_container = BubbleContainer.new_from_json_dict(bubble)
+            carousel.contents.append(bubble_container)
+        return carousel
+
