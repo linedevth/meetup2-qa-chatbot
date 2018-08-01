@@ -15,12 +15,16 @@
 from dateutil.relativedelta import relativedelta as rd
 import requests
 import os
+import sys
 import json
 
 jenkins_user = os.getenv('JENKINS_USER')
 jenkins_user_token = os.getenv('JENKINS_USER_TOKEN')
 fmt = '{0.minutes} mins {0.seconds}s'
 bucket_url_prefix = os.getenv('VIDEO_BUCKET_URL_PREFIX')
+if bucket_url_prefix is None:
+    print('Specify VIDEO_BUCKET_URL_PREFIX as environment variable')
+    sys.exit(1)
 
 video_url = bucket_url_prefix + '/{0}/{1}/{2}.mp4'
 
