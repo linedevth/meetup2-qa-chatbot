@@ -107,6 +107,22 @@ class Jenkins(object):
             data['report_url'] = job_url + '{0}/allure'.format(build_no)
         return data
 
+
+    def get_failed_tests_video(self, job_url, build_no):
+        data = self.get_build_info(job_url, 'lastBuild')
+        job_url_api = job_url + '/{0}/testReport/api/json'.format(build_no)
+        response = requests.post(job_url_api, auth=(jenkins_user, jenkins_user_token))
+        data['failed_cases'] = []
+        if response.status_code == 200:
+            resp_json = response.json()
+            for suite in resp_json['suites']:
+                for case in suite['cases']:
+                    if case['errorDetails'] != None:
+                        data['failed_cases'].append(video_url.format(data['job_name'], data['build_no'], case['name']))
+        print(data)
+        return data
+
+
     def get_test_latest_result(self, job_url):
         data = self.get_build_info(job_url, 'lastBuild')
         job_url_api = job_url + '/lastBuild/testReport/api/json'
@@ -132,12 +148,14 @@ class Jenkins(object):
                 for case in suite['cases']:
                     if case['status'].upper() == 'PASSED':
                         status_color = '#2ac12f'
+                        status = 'PASSED'
                     else:
                         status_color = '#e8192e'
+                        status = 'FAILED'
                     data['suites'][suite_index]['tests'].append(
                         {
                             'test_name': case['name'],
-                            'status': case['status'],
+                            'status': status,
                             'status_color': status_color,
                             'duration': case['duration'],
                             'video': video_url.format(data['job_name'], data['build_no'], case['name'])

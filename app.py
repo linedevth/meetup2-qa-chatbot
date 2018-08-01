@@ -44,6 +44,8 @@ jenkins_url = os.getenv('JENKINS_URL', None)
 jenkins_user = os.getenv('JENKINS_USER', None)
 jenkins_user_token = os.getenv('JENKINS_USER_TOKEN', None)
 
+failed_image = 'https://i2.wp.com/hdsmileys.com/wp-content/uploads/2017/10/sally-crying-loudly.gif'
+
 if channel_secret is None:
     print('Specify LINE_CHANNEL_SECRET as environment variable.')
     sys.exit(1)
@@ -118,8 +120,15 @@ def send_test_result():
         'result_message': 'success'
     }
     result_data = jenkins.get_test_result(data['job_url'], data['build_no'])
+    messages = []
     bubble_container = test_result.generate_test_result_message(result_data)
-    line_bot_api.push_message(data['to'], messages=FlexSendMessage('Test Result', contents=bubble_container))
+    messages.append(FlexSendMessage(alt_text='Test Result', contents=bubble_container))
+    if result_data['test_result'] != 'SUCCESS':
+        failed_tests = jenkins.get_failed_tests_video(data['job_url'], data['build_no'])
+        for failed_test_video in failed_tests['failed_cases']:
+            messages.append(VideoSendMessage(original_content_url=failed_test_video, preview_image_url=failed_image))
+    print(messages)
+    line_bot_api.push_message(data['to'], messages=messages)
     return jsonify(result)
 
 
@@ -176,7 +185,6 @@ def handle_postback_event(event):
         job_url = os.getenv('JENKINS_URL') + '/job/' + job_name + '/'
         latest_result_data = jenkins.get_test_latest_result(job_url)
         carousel_container = test_result.generate_latest_result(latest_result_data)
-        line_bot_api.get_room_member_ids()
         line_bot_api.reply_message(event.reply_token, messages=FlexSendMessage(alt_text='Latest Result', contents=carousel_container))
 
 

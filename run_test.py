@@ -48,7 +48,7 @@ class RunTest(object):
         job_list = jenkins.list_failed_job()
         if len(job_list) > 0:
             button_template.text = 'Please Select The Failed Test Jobs'
-            button_template.thumbnail_image_url = '{0}/oops.jpg'.format(bucket_prefix)
+            button_template.thumbnail_image_url = '{0}/confirm_rerun_failed_test.jpg'.format(bucket_prefix)
             for job in job_list:
                 job_name = job['name']
                 button_template.actions.append(
