@@ -126,8 +126,7 @@ def send_test_result():
     if result_data['test_result'] != 'SUCCESS':
         failed_tests = jenkins.get_failed_tests_video(data['job_url'], data['build_no'])
         for failed_test_video in failed_tests['failed_cases']:
-            messages.append(VideoSendMessage(original_content_url=failed_test_video, preview_image_url=failed_image))
-    print(messages)
+            messages.append(VideoSendMessage(original_content_url=failed_test_video, preview_image_url=failed_test_video))
     line_bot_api.push_message(data['to'], messages=messages)
     return jsonify(result)
 
@@ -147,13 +146,6 @@ def handle_follow_event(event):
 def handle_text_message(event):
     print('Got Text Message Event')
     print('user_id: {}'.format(event.source.user_id))
-    if event.message.text == 'video':
-        image_url = 'https://images.theconversation.com/files/124181/original/image-20160526-22086-1skmtaf.jpg?ixlib=rb-1.1.0&q=45&auto=format&w=240&h=240&fit=crop'
-        # video_url = 'https://www.sample-videos.com/video/mp4/360/big_buck_bunny_360p_5mb.mp4'
-        # video_url = 'https://s3-ap-northeast-1.amazonaws.com/thsetmeetup2/output.mp4'
-        video_url = 'https://s3-ap-northeast-1.amazonaws.com/thsetmeetup2/zalenium_test_page_load_MeetUpTestDemo_chrome_LINUX_20180802052908905_COMPLETED.mp4'
-        line_bot_api.reply_message(event.reply_token, messages=VideoSendMessage(original_content_url=video_url,
-                                                                                preview_image_url=image_url))
 
 
 @handler.add(PostbackEvent)
@@ -161,7 +153,7 @@ def handle_postback_event(event):
     postback_data = event.postback.data
     print('postback_data: {}'.format(postback_data))
     if postback_data == 'mode=run_test':
-        job_template = run_test.display_test_job_menu(data='start_test={}')
+        job_template = run_test.display_test_job_menu(data='start_test={}', image_url='run.jpg')
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
     if postback_data == 'mode=rerun_test':
@@ -169,7 +161,7 @@ def handle_postback_event(event):
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Failed Job List',
                                                                                    template=failed_job_template))
     if postback_data == 'mode=latest_result':
-        job_template = run_test.display_test_job_menu(data='latest_result={}')
+        job_template = run_test.display_test_job_menu(data='latest_result={}', image_url='latest_result.png')
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
 
@@ -185,9 +177,13 @@ def handle_postback_event(event):
         job_name = postback_data.split('=')[1]
         job_url = os.getenv('JENKINS_URL') + '/job/' + job_name + '/'
         latest_result_data = jenkins.get_test_latest_result(job_url)
-        print(json.dumps(latest_result_data))
         carousel_container = test_result.generate_latest_result(latest_result_data)
         line_bot_api.reply_message(event.reply_token, messages=FlexSendMessage(alt_text='Latest Result', contents=carousel_container))
+
+    if 'video=' in postback_data:
+        video_origin_url = postback_data.split('=')[1]
+        line_bot_api.reply_message(event.reply_token, messages=VideoSendMessage(original_content_url=video_origin_url,
+                                                                                preview_image_url=video_origin_url))
 
 
 if __name__ == '__main__':

@@ -25,14 +25,14 @@ bucket_prefix = os.getenv('VIDEO_BUCKET_URL_PREFIX')
 
 class RunTest(object):
 
-    def display_test_job_menu(self, data):
+    def display_test_job_menu(self, data, image_url='run.jp'):
         """
             Display Job List Menu.
         """
         button_template = ButtonsTemplate()
         button_template.text = 'Please Select The Job'
         job_list = jenkins.list_job()
-        button_template.thumbnail_image_url = '{0}/run.jpg'.format(bucket_prefix)
+        button_template.thumbnail_image_url = '{0}/{1}'.format(bucket_prefix, image_url)
         for job in job_list:
             job_name = job['name']
             button_template.actions.append(

@@ -16,6 +16,7 @@ from linebot.models import (
     BubbleContainer, CarouselContainer
 )
 import json
+from jenkins import video_url
 
 
 class TestResult(object):
@@ -220,15 +221,19 @@ class TestResult(object):
                             {
                                 "type": "text",
                                 "text": test["test_name"],
-                                "size": "xxs",
+                                "size": "sm",
                                 "wrap": True,
-                                "flex": 4
+                                "flex": 4,
+                                "action": {
+                                    "type": "postback",
+                                    "data": "video={}".format(video_url.format(data['job_name'], data["build_no"], test["test_name"]))
+                                }
                             },
                             {
                                 "type": "text",
                                 "text": test["status"],
                                 "color": test['status_color'],
-                                "size": "xxs",
+                                "size": "xs",
                                 "align": "end"
                             }
                         ]

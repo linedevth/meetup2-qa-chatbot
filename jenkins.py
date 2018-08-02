@@ -22,7 +22,7 @@ import json
 jenkins_user = os.getenv('JENKINS_USER')
 jenkins_user_token = os.getenv('JENKINS_USER_TOKEN')
 fmt = '{0.minutes} mins {0.seconds}s'
-fmt_result = fmt + ' ago'
+fmt_result = '{0.hours} hours {0.minutes} mins {0.seconds}s ago'
 bucket_url_prefix = os.getenv('VIDEO_BUCKET_URL_PREFIX')
 if bucket_url_prefix is None:
     print('Specify VIDEO_BUCKET_URL_PREFIX as environment variable')
@@ -45,12 +45,13 @@ class Jenkins(object):
         if response.status_code == 200:
             resp_json = response.json()
             for job in resp_json['jobs']:
-                job_list.append(
-                    {
-                        'name': job['name'],
-                        'url': job['url']
-                    }
-                )
+                if 'test' in job['name'].lower():
+                    job_list.append(
+                        {
+                            'name': job['name'],
+                            'url': job['url']
+                        }
+                    )
         return job_list
 
     def list_failed_job(self):
@@ -60,7 +61,7 @@ class Jenkins(object):
         if response.status_code == 200:
             resp_json = response.json()
             for job in resp_json['jobs']:
-                if job['color'] != 'blue':
+                if job['color'] != 'blue' and 'test' in job['name'].lower():
                     job_list.append(
                         {
                             'name': job['name'],
