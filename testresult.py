@@ -177,7 +177,7 @@ class TestResult(object):
                         },
                         {
                             "type": "text",
-                            "text": "Build#{}".format(data["build_no"]),
+                            "text": "Build#{0}, {1}".format(data["build_no"], data['run_at']),
                             "color": "#000000",
                             "size": "xs"
                         }

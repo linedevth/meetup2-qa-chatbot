@@ -13,6 +13,7 @@
 #  under the License.
 
 from dateutil.relativedelta import relativedelta as rd
+from datetime import datetime
 import requests
 import os
 import sys
@@ -21,6 +22,7 @@ import json
 jenkins_user = os.getenv('JENKINS_USER')
 jenkins_user_token = os.getenv('JENKINS_USER_TOKEN')
 fmt = '{0.minutes} mins {0.seconds}s'
+fmt_result = fmt + ' ago'
 bucket_url_prefix = os.getenv('VIDEO_BUCKET_URL_PREFIX')
 if bucket_url_prefix is None:
     print('Specify VIDEO_BUCKET_URL_PREFIX as environment variable')
@@ -58,7 +60,7 @@ class Jenkins(object):
         if response.status_code == 200:
             resp_json = response.json()
             for job in resp_json['jobs']:
-                if job['color'] == 'red':
+                if job['color'] != 'blue':
                     job_list.append(
                         {
                             'name': job['name'],
@@ -74,10 +76,12 @@ class Jenkins(object):
         resp_json = response.json()
         build_data['job_name'] = str(resp_json['fullDisplayName']).split(' ')[0]
         build_data['build_no'] = resp_json['number']
+        build_data['run_at'] = fmt_result.format(rd(datetime.now(), datetime.fromtimestamp(int(resp_json['timestamp']/1000))))
         for action in resp_json['actions']:
-            if 'hudson.model.CauseAction' in action['_class']:
-                build_data['started_by'] = action['causes'][0]['userName']
-                break
+            if '_class' in action:
+                if 'hudson.model.CauseAction' in action['_class']:
+                    build_data['started_by'] = action['causes'][0]['userName']
+                    break
         if len(resp_json['changeSets']) == 0:
             build_data['changes'] = 'NO CHANGES'
         else:

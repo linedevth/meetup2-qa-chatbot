@@ -150,7 +150,8 @@ def handle_text_message(event):
     if event.message.text == 'video':
         image_url = 'https://images.theconversation.com/files/124181/original/image-20160526-22086-1skmtaf.jpg?ixlib=rb-1.1.0&q=45&auto=format&w=240&h=240&fit=crop'
         # video_url = 'https://www.sample-videos.com/video/mp4/360/big_buck_bunny_360p_5mb.mp4'
-        video_url = 'https://s3-ap-northeast-1.amazonaws.com/weekup2/output.mp4'
+        # video_url = 'https://s3-ap-northeast-1.amazonaws.com/thsetmeetup2/output.mp4'
+        video_url = 'https://s3-ap-northeast-1.amazonaws.com/thsetmeetup2/zalenium_test_page_load_MeetUpTestDemo_chrome_LINUX_20180802052908905_COMPLETED.mp4'
         line_bot_api.reply_message(event.reply_token, messages=VideoSendMessage(original_content_url=video_url,
                                                                                 preview_image_url=image_url))
 
@@ -184,6 +185,7 @@ def handle_postback_event(event):
         job_name = postback_data.split('=')[1]
         job_url = os.getenv('JENKINS_URL') + '/job/' + job_name + '/'
         latest_result_data = jenkins.get_test_latest_result(job_url)
+        print(json.dumps(latest_result_data))
         carousel_container = test_result.generate_latest_result(latest_result_data)
         line_bot_api.reply_message(event.reply_token, messages=FlexSendMessage(alt_text='Latest Result', contents=carousel_container))
 
