@@ -200,7 +200,7 @@ class Jenkins(object):
         data = self.get_builds_info(job_url)
 
         if len(data['builds_no']) > limit:
-            data['builds_no'] = data['builds_no'][0:5]
+            data['builds_no'] = data['builds_no'][0:limit]
 
         data['test_result_history'] = list()
         for build_no in data['builds_no']:
