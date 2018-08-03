@@ -86,7 +86,7 @@ class Jenkins(object):
         if len(resp_json['changeSets']) == 0:
             build_data['changes'] = 'NO CHANGES'
         else:
-            build_data['changes'] = resp_json['changeSet'][0]
+            build_data['changes'] = resp_json['changeSets'][0]['items'][0]['msg']
         return build_data
 
     def get_test_result(self, job_url, build_no):
