@@ -22,6 +22,7 @@ from testresult import TestResult
 from jenkins import Jenkins
 from jenkins import video_url
 from run_test import RunTest
+from statistic import Statistic
 
 from linebot import (
     LineBotApi, WebhookHandler
@@ -68,6 +69,7 @@ handler = WebhookHandler(channel_secret)
 test_result = TestResult()
 run_test = RunTest()
 jenkins = Jenkins()
+statistic = Statistic()
 
 static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 
@@ -159,6 +161,10 @@ def handle_postback_event(event):
         job_template = run_test.display_test_job_menu(data='latest_result={}', image_url='latest_result.png')
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
+    if postback_data == 'mode=run_stat':
+        job_template = run_test.display_test_job_menu(data='run_stat={}', image_url='stat.jpg')
+        line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
+                                                                                   template=job_template))
 
     if 'start_test=' in postback_data or 'rerun_test=' in postback_data:
         job_name = postback_data.split('=')[1]
@@ -167,6 +173,15 @@ def handle_postback_event(event):
             line_bot_api.reply_message(event.reply_token, messages=TextSendMessage(text='Trigger Job:{0} Please Wait...'.format(job_name)))
         else:
             line_bot_api.reply_message(event.reply_token, messages=TextSendMessage(text='Trigger Job: {0} Failed!'.format(job_name)))
+
+    if 'run_stat=' in postback_data:
+        job_name = postback_data.split('=')[1]
+        job_url = jenkins.get_job_url(job_name)
+
+        data = jenkins.get_test_result_history(job_url)
+
+        bubble_container = statistic.generate_test_stat_message(data)
+        line_bot_api.push_message(event.reply_token, messages=FlexSendMessage('Test Result', contents=bubble_container))
 
     if 'latest_result=' in postback_data:
         job_name = postback_data.split('=')[1]

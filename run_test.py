@@ -20,12 +20,13 @@ from jenkins import Jenkins
 
 jenkins = Jenkins()
 
+# VIDEO_BUCKET_URL_PREFIX; put base URL of image storage ex; 'https://s3.console.aws.amazon.com/s3/object/bucket-prefix/' to environment variable
 bucket_prefix = os.getenv('VIDEO_BUCKET_URL_PREFIX')
 
 
 class RunTest(object):
 
-    def display_test_job_menu(self, data, image_url='run.jp'):
+    def display_test_job_menu(self, data, image_url='run.jpg'):
         """
             Display Job List Menu.
         """

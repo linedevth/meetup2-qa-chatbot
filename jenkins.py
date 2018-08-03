@@ -89,6 +89,19 @@ class Jenkins(object):
             build_data['changes'] = resp_json['changeSets'][0]['items'][0]['msg']
         return build_data
 
+
+    def get_builds_info(self, job_url):
+        job_url = job_url + '/api/json'
+        response = requests.post(job_url, auth=(jenkins_user, jenkins_user_token))
+        builds_data = dict()
+        resp_json = response.json()
+        builds_data['job_name'] = str(resp_json['fullDisplayName']).split(' ')[0]
+
+        builds_data['builds_no'] = [build['number'] for build in resp_json['builds']]
+
+        return builds_data
+
+
     def get_test_detail_by_name(self, job_url, build_no, test_name):
         test_url = job_url + '/{0}/testReport/api/json'.format(build_no)
         response = requests.post(test_url, auth=(jenkins_user, jenkins_user_token))
@@ -108,11 +121,15 @@ class Jenkins(object):
             if resp_json['failCount'] == 0:
                 data['header_color'] = "#0ab20d"
                 data['test_result'] = "SUCCESS"
+                data['is_test_result_passed'] = True
+                data['stat_image'] = 'https://s3-ap-northeast-1.amazonaws.com/thsetmeetup2/smile.png'
                 data['hero_image'] = 'https://i0.wp.com/hdsmileys.com/wp-content/uploads/2017/' \
                                      '10/brown-cony-and-sally-dancing.gif'
             else:
                 data['header_color'] = "#b20a0a"
                 data['test_result'] = "FAILED"
+                data['is_test_result_passed'] = False
+                data['stat_image'] = 'https://s3-ap-northeast-1.amazonaws.com/thsetmeetup2/angry.png'
                 data['hero_image'] = 'https://i2.wp.com/hdsmileys.com/wp-content/uploads' \
                                      '/2017/10/sally-crying-loudly.gif'
             data['passed'] = resp_json['passCount']
@@ -179,4 +196,30 @@ class Jenkins(object):
         return data
 
 
+    def get_test_result_history(self, job_url, limit=5):
+        data = self.get_builds_info(job_url)
+
+        if len(data['builds_no']) > limit:
+            data['builds_no'] = data['builds_no'][0:limit]
+
+        data['test_result_history'] = list()
+        for build_no in data['builds_no']:
+            data['test_result_history'].append(self.get_test_result(job_url, build_no))
+        
+        passed_count = 0
+        data['last_success_since'] = None
+
+        for test_result in data['test_result_history']:
+            if test_result['is_test_result_passed']:
+                passed_count = passed_count + 1
+                if data['last_success_since'] is None:
+                    data['last_success_since'] = test_result['run_at']
+    
+        if data['last_success_since'] is None:
+            data['last_success_since'] = 'N/A'
+
+        data['passed_count'] = passed_count
+        data['pass_rate_percentage'] = int(passed_count / len(data['test_result_history']) * 100)
+
+        return data
 
