@@ -128,20 +128,6 @@ def send_test_result():
     return jsonify(result)
 
 
-@app.route('/teststat', methods=['GET'])
-def send_test_stat():
-    data = dict()
-    data['job_url'] = 'http://setbot002-thset-jp2v-dev.lineinfra-dev.com:8080/job/webtest_linedevdocs/'
-
-    data = jenkins.get_test_result_history(data['job_url'])
-    data['to'] = 'U44ed12d686c1b36018ee5c54a2f34161'
-
-    bubble_container = statistic.generate_test_stat_message(data)
-    line_bot_api.push_message(data['to'], messages=FlexSendMessage('Test Result', contents=bubble_container))
-
-    return jsonify(data)
-
-
 @handler.add(FollowEvent)
 def handle_follow_event(event):
     user_id = event.source.user_id
