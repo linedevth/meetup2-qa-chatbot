@@ -226,7 +226,7 @@ class TestResult(object):
                                 "flex": 4,
                                 "action": {
                                     "type": "postback",
-                                    "data": "video={0}&name={1}".format(video_url.format(data['job_name'], data["build_no"], test["test_name"]), test["test_name"])
+                                    "data": "detail_job={0}&build_no={1}&test_name={2}".format(data['job_name'], data["build_no"], test["test_name"])
                                 }
                             },
                             {

@@ -102,6 +102,15 @@ class Jenkins(object):
         return builds_data
 
 
+    def get_test_detail_by_name(self, job_url, build_no, test_name):
+        test_url = job_url + '/{0}/testReport/api/json'.format(build_no)
+        response = requests.post(test_url, auth=(jenkins_user, jenkins_user_token))
+        resp_json = response.json()
+        for suite in resp_json['suites']:
+            for case in suite['cases']:
+                if case['name'] == test_name:
+                    return case
+
     def get_test_result(self, job_url, build_no):
         data = self.get_build_info(job_url, build_no)
         job_url_api = job_url + '/{0}/testReport/api/json'.format(data['build_no'])
@@ -141,7 +150,6 @@ class Jenkins(object):
                 for case in suite['cases']:
                     if case['errorDetails'] != None:
                         data['failed_cases'].append(video_url.format(data['job_name'], data['build_no'], case['name']))
-        print(data)
         return data
 
 
@@ -180,7 +188,8 @@ class Jenkins(object):
                             'status': status,
                             'status_color': status_color,
                             'duration': case['duration'],
-                            'video': video_url.format(data['job_name'], data['build_no'], case['name'])
+                            'video': video_url.format(data['job_name'], data['build_no'], case['name']),
+                            'error': case['errorDetails']
                         }
                     )
                 suite_index += 1
@@ -213,3 +222,4 @@ class Jenkins(object):
         data['pass_rate_percentage'] = int(passed_count / len(data['test_result_history']) * 100)
 
         return data
+

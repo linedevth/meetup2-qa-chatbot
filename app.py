@@ -20,6 +20,7 @@ import errno
 import json
 from testresult import TestResult
 from jenkins import Jenkins
+from jenkins import video_url
 from run_test import RunTest
 from statistic import Statistic
 
@@ -122,14 +123,8 @@ def send_test_result():
         'result_message': 'success'
     }
     result_data = jenkins.get_test_result(data['job_url'], data['build_no'])
-    messages = []
     bubble_container = test_result.generate_test_result_message(result_data)
-    messages.append(FlexSendMessage(alt_text='Test Result', contents=bubble_container))
-    if result_data['test_result'] != 'SUCCESS':
-        failed_tests = jenkins.get_failed_tests_video(data['job_url'], data['build_no'])
-        for failed_test_video in failed_tests['failed_cases']:
-            messages.append(VideoSendMessage(original_content_url=failed_test_video, preview_image_url=failed_test_video))
-    line_bot_api.push_message(data['to'], messages=messages)
+    line_bot_api.push_message(data['to'], messages=FlexSendMessage(alt_text='Test Result', contents=bubble_container))
     return jsonify(result)
 
 
@@ -209,13 +204,19 @@ def handle_postback_event(event):
         carousel_container = test_result.generate_latest_result(latest_result_data)
         line_bot_api.reply_message(event.reply_token, messages=FlexSendMessage(alt_text='Latest Result', contents=carousel_container))
 
-    if 'video=' in postback_data:
-        video_origin_url = postback_data.split('&')[0].split('=')[1]
-        test_name = postback_data.split('&')[1].split('=')[1]
-        messages = [
-            TextSendMessage(text=test_name),
-            VideoSendMessage(original_content_url=video_origin_url, preview_image_url=video_origin_url)
-        ]
+    if 'detail_job=' in postback_data:
+        job_name = postback_data.split('&')[0].split('=')[1]
+        build_no = postback_data.split('&')[1].split('=')[1]
+        test_name = postback_data.split('&')[2].split('=')[1]
+        job_url = os.getenv('JENKINS_URL') + '/job/' + job_name + '/'
+        test_result_data = jenkins.get_test_detail_by_name(job_url, build_no, test_name)
+        messages = []
+        video_link = video_url.format(job_name, build_no, test_name)
+        messages.append(VideoSendMessage(original_content_url=video_link, preview_image_url=video_link))
+        if test_result_data['errorDetails'] is not None:
+            messages.append(TextSendMessage(text='{0}: FAILED!\nErrorMessage:{1}'.format(test_name, test_result_data['errorDetails'])))
+        else:
+            messages.append(TextSendMessage(text='{}: PASSED!'.format(test_name)))
         line_bot_api.reply_message(event.reply_token, messages=messages)
 
 
