@@ -162,7 +162,7 @@ def handle_postback_event(event):
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
     if postback_data == 'mode=run_stat':
-        job_template = run_test.display_test_job_menu(data='run_stat={}', image_url='run.jpg')
+        job_template = run_test.display_test_job_menu(data='run_stat={}', image_url='stat.jpg')
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
 
