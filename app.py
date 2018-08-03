@@ -21,6 +21,7 @@ import json
 from testresult import TestResult
 from jenkins import Jenkins
 from run_test import RunTest
+from statistic import Statistic
 
 from linebot import (
     LineBotApi, WebhookHandler
@@ -67,6 +68,7 @@ handler = WebhookHandler(channel_secret)
 test_result = TestResult()
 run_test = RunTest()
 jenkins = Jenkins()
+statistic = Statistic()
 
 static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 
@@ -131,6 +133,20 @@ def send_test_result():
     return jsonify(result)
 
 
+@app.route('/teststat', methods=['GET'])
+def send_test_stat():
+    data = dict()
+    data['job_url'] = 'http://setbot002-thset-jp2v-dev.lineinfra-dev.com:8080/job/webtest_linedevdocs/'
+
+    data = jenkins.get_test_result_history(data['job_url'])
+    data['to'] = 'U44ed12d686c1b36018ee5c54a2f34161'
+
+    bubble_container = statistic.generate_test_stat_message(data)
+    line_bot_api.push_message(data['to'], messages=FlexSendMessage('Test Result', contents=bubble_container))
+
+    return jsonify(data)
+
+
 @handler.add(FollowEvent)
 def handle_follow_event(event):
     user_id = event.source.user_id
@@ -164,6 +180,10 @@ def handle_postback_event(event):
         job_template = run_test.display_test_job_menu(data='latest_result={}', image_url='latest_result.png')
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
+    if postback_data == 'mode=run_stat':
+        job_template = run_test.display_test_job_menu(data='run_stat={}', image_url='run.jpg')
+        line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
+                                                                                   template=job_template))
 
     if 'start_test=' in postback_data or 'rerun_test=' in postback_data:
         job_name = postback_data.split('=')[1]
@@ -172,6 +192,15 @@ def handle_postback_event(event):
             line_bot_api.reply_message(event.reply_token, messages=TextSendMessage(text='Trigger Job:{0} Please Wait...'.format(job_name)))
         else:
             line_bot_api.reply_message(event.reply_token, messages=TextSendMessage(text='Trigger Job: {0} Failed!'.format(job_name)))
+
+    if 'run_stat=' in postback_data:
+        job_name = postback_data.split('=')[1]
+        job_url = jenkins.get_job_url(job_name)
+
+        data = jenkins.get_test_result_history(job_url)
+
+        bubble_container = statistic.generate_test_stat_message(data)
+        line_bot_api.push_message(event.reply_token, messages=FlexSendMessage('Test Result', contents=bubble_container))
 
     if 'latest_result=' in postback_data:
         job_name = postback_data.split('=')[1]
