@@ -134,7 +134,7 @@ def handle_follow_event(event):
     line_bot_api.unlink_rich_menu_from_user(user_id)
     rich_menu_list = line_bot_api.get_rich_menu_list()
     for rich_menu in rich_menu_list:
-        if rich_menu.chat_bar_text == 'Menu':
+        if rich_menu.chat_bar_text == 'Test Helper':
             print('Linking Rich Menu: \'{0}\' to user_id: \'{1}\''.format(rich_menu.chat_bar_text, user_id))
             line_bot_api.link_rich_menu_to_user(user_id, rich_menu.rich_menu_id)
 
@@ -161,8 +161,8 @@ def handle_postback_event(event):
         job_template = run_test.display_test_job_menu(data='latest_result={}', image_url='latest_result.png')
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
-    if postback_data == 'mode=run_stat':
-        job_template = run_test.display_test_job_menu(data='run_stat={}', image_url='stat.jpg')
+    if postback_data == 'mode=test_stat':
+        job_template = run_test.display_test_job_menu(data='test_stat={}', image_url='stat.jpg')
         line_bot_api.reply_message(event.reply_token, messages=TemplateSendMessage(alt_text='Job List',
                                                                                    template=job_template))
 
@@ -174,14 +174,12 @@ def handle_postback_event(event):
         else:
             line_bot_api.reply_message(event.reply_token, messages=TextSendMessage(text='Trigger Job: {0} Failed!'.format(job_name)))
 
-    if 'run_stat=' in postback_data:
+    if 'test_stat=' in postback_data:
         job_name = postback_data.split('=')[1]
-        job_url = jenkins.get_job_url(job_name)
-
+        job_url = os.getenv('JENKINS_URL') + '/job/' + job_name + '/'
         data = jenkins.get_test_result_history(job_url)
-
         bubble_container = statistic.generate_test_stat_message(data)
-        line_bot_api.push_message(event.reply_token, messages=FlexSendMessage('Test Result', contents=bubble_container))
+        line_bot_api.reply_message(event.reply_token, messages=FlexSendMessage('Test Result', contents=bubble_container))
 
     if 'latest_result=' in postback_data:
         job_name = postback_data.split('=')[1]

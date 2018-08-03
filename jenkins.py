@@ -77,6 +77,7 @@ class Jenkins(object):
         resp_json = response.json()
         build_data['job_name'] = str(resp_json['fullDisplayName']).split(' ')[0]
         build_data['build_no'] = resp_json['number']
+        build_data['result'] = resp_json['result']
         build_data['run_at'] = fmt_result.format(rd(datetime.now(), datetime.fromtimestamp(int(resp_json['timestamp']/1000))))
         for action in resp_json['actions']:
             if '_class' in action:
@@ -113,6 +114,10 @@ class Jenkins(object):
 
     def get_test_result(self, job_url, build_no):
         data = self.get_build_info(job_url, build_no)
+
+        if data['result'] == 'ABORTED':
+            return None
+
         job_url_api = job_url + '/{0}/testReport/api/json'.format(data['build_no'])
         response = requests.post(job_url_api, auth=(jenkins_user, jenkins_user_token))
         if response.status_code == 200:
@@ -204,7 +209,9 @@ class Jenkins(object):
 
         data['test_result_history'] = list()
         for build_no in data['builds_no']:
-            data['test_result_history'].append(self.get_test_result(job_url, build_no))
+            test_result = self.get_test_result(job_url, build_no)
+            if test_result is not None:
+                data['test_result_history'].append(test_result)
         
         passed_count = 0
         data['last_success_since'] = None
@@ -214,7 +221,7 @@ class Jenkins(object):
                 passed_count = passed_count + 1
                 if data['last_success_since'] is None:
                     data['last_success_since'] = test_result['run_at']
-    
+
         if data['last_success_since'] is None:
             data['last_success_since'] = 'N/A'
 

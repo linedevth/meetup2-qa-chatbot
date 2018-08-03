@@ -49,7 +49,7 @@ class Statistic(object):
             "type": "bubble",
             "styles": {
                 "header": {
-                    "backgroundColor": "#2ac12f"
+                    "backgroundColor": "#367ced"
                 }
             },
             "header": {
@@ -60,7 +60,7 @@ class Statistic(object):
                         "type": "text",
                         "text": "Test Statistic",
                         "weight": "bold",
-                        "color": "#000000",
+                        "color": "#ffffff",
                         "size": "md"
                     }
                 ]
