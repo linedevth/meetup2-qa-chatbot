@@ -181,9 +181,13 @@ def handle_postback_event(event):
         line_bot_api.reply_message(event.reply_token, messages=FlexSendMessage(alt_text='Latest Result', contents=carousel_container))
 
     if 'video=' in postback_data:
-        video_origin_url = postback_data.split('=')[1]
-        line_bot_api.reply_message(event.reply_token, messages=VideoSendMessage(original_content_url=video_origin_url,
-                                                                                preview_image_url=video_origin_url))
+        video_origin_url = postback_data.split('&')[0].split('=')[1]
+        test_name = postback_data.split('&')[1].split('=')[1]
+        messages = [
+            TextSendMessage(text=test_name),
+            VideoSendMessage(original_content_url=video_origin_url, preview_image_url=video_origin_url)
+        ]
+        line_bot_api.reply_message(event.reply_token, messages=messages)
 
 
 if __name__ == '__main__':
