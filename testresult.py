@@ -172,14 +172,14 @@ class TestResult(object):
                         {
                             "type": "text",
                             "text": data["job_name"],
-                            "color": "#000000",
+                            "color": "#ffffff",
                             "size": "lg",
                             "weight": "bold"
                         },
                         {
                             "type": "text",
                             "text": "Build#{0}, {1}".format(data["build_no"], data['run_at']),
-                            "color": "#000000",
+                            "color": "#ffffff",
                             "size": "xs"
                         }
                     ]
